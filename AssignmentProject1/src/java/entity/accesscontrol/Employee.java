@@ -5,6 +5,7 @@
 package entity.accesscontrol;
 
 import java.sql.Date;
+import java.util.ArrayList;
 
 /**
  *
@@ -18,7 +19,26 @@ public class Employee {
     private int roleID;
     private int departmentID;
     private String createBy;
+    private Role roles;
+    private ArrayList<UserEmployee> uemps = new ArrayList<>();
 
+    public Role getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Role roles) {
+        this.roles = roles;
+    }
+    
+    public ArrayList<UserEmployee> getUemps() {
+        return uemps;
+    }
+
+    public void setUemps(ArrayList<UserEmployee> uemps) {
+        this.uemps = uemps;
+    }
+
+    
     // Constructor không tham số
     public Employee() {
     }

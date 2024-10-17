@@ -6,7 +6,7 @@
 package control.accesscontrol;
 
 import dal.UserDBContext;
-import entity.accesscontrol.User;
+import entity.User;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -36,7 +36,7 @@ public class LoginController extends HttpServlet {
         }
         else
         {
-            resp.getWriter().println("login failed!");
+            resp.getWriter().println("login fail!");
         }
         
         String url = this.getInitParameter("url");
