@@ -4,6 +4,8 @@
  */
 package entity;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Admin
@@ -11,6 +13,25 @@ package entity;
 public class User {
     private String UserName ;
     private String Pass;
+    private ArrayList<UserEmployee> uemps = new ArrayList<>();
+   
+    private ArrayList<Role> roles = new ArrayList<>();
+
+    public ArrayList<UserEmployee> getUemps() {
+        return uemps;
+    }
+
+    public void setUemps(ArrayList<UserEmployee> uemps) {
+        this.uemps = uemps;
+    }
+
+    public ArrayList<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(ArrayList<Role> roles) {
+        this.roles = roles;
+    }
 
     public User() {
     }
