@@ -19,42 +19,52 @@ import java.util.logging.Logger;
  */
 public class EmployeeDBContext extends DBContext<Employee> {
 
-    public ArrayList<Employee> search(Integer EmployeeID, String EmployeeName, String EmployeeSalaryLevel, Integer RoleID, Integer DepartmentID, String CreateBy) {
-        String sql = "SELECT e.EmployeeID, e.EmployeeName, e.EmployeeSalaryLevel, e.RoleID, e.DepartmentID, e.CreateBy FROM Employee e \n"
-                + "WHERE (1=1)";
-
+    public ArrayList<Employee> search(Integer EmployeeID, String EmployeeName, Boolean gender, Date from, Date to, Integer DepartmentID) {
+        String sql = "SELECT \n"
+                + "    e.EmployeeID, \n"
+                + "    e.EmployeeName, \n"
+                + "    e.gender, \n"
+                + "    e.dob, \n"
+                + "    d.DepartmentID, \n"
+                + "    d.DepartmentName, \n"
+                + "    r.RoleName \n"
+                + "FROM \n"
+                + "    Employee e \n"
+                + "INNER JOIN \n"
+                + "    Department d ON e.DepartmentID = d.DepartmentID \n"
+                + "INNER JOIN \n"
+                + "    Role r ON e.RoleID = r.RoleID \n"
+                + "	WHERE \n"
+                + "    1 = 1";
         ArrayList<Employee> emps = new ArrayList<>();
         ArrayList<Object> paramValues = new ArrayList<>();
-
         if (EmployeeID != null) {
             sql += " AND e.EmployeeID = ?";
             paramValues.add(EmployeeID);
         }
-
         if (EmployeeName != null) {
-            sql += " AND e.EmployeeName LIKE '%'+?+'%'";
+            sql += " AND e.EmployeeName LIKE '%' + ? + '%'";
             paramValues.add(EmployeeName);
         }
-
-        if (EmployeeSalaryLevel != null) {
-            sql += " AND e.EmployeeSalaryLevel = ?";
-            paramValues.add(EmployeeSalaryLevel);
+        if (gender != null) {
+            sql += " AND e.gender = ?";
+            paramValues.add(gender);
         }
+        
 
-        if (RoleID != null) {
-            sql += " AND e.RoleID = ?";
-            paramValues.add(RoleID);
+        if (from != null) {
+            sql += " AND e.dob >= ?";
+            paramValues.add(from);
         }
-
-        if (DepartmentID != null) {
-            sql += " AND e.DepartmentID = ?";
+        if (to != null) {
+            sql += " AND e.dob = ?";
+            paramValues.add(to);
+        }
+        if (DepartmentID != null && DepartmentID != -1) {
+            sql += " AND d.DepartmentID  = ?";
             paramValues.add(DepartmentID);
         }
-
-        if (CreateBy != null) {
-            sql += " AND e.CreateBy LIKE '%'+?+'%'";
-            paramValues.add(CreateBy);
-        }
+        
 
         PreparedStatement stm = null;
         try {
@@ -66,14 +76,18 @@ public class EmployeeDBContext extends DBContext<Employee> {
             while (rs.next()) {
                 Employee e = new Employee();
                 e.setEmployeeID(rs.getInt("EmployeeID"));
-                e.setEmployeeName(rs.getNString("EmployeeName"));
-                e.setEmployeeSalaryLevel(rs.getNString("EmployeeSalaryLevel"));
-                e.setRoleID(rs.getInt("RoleID"));
+                e.setEmployeeName(rs.getString("EmployeeName"));
+                e.setGender(rs.getBoolean("gender"));
+                e.setDob(rs.getDate("dob"));
+                
+
                 Department d = new Department();
-                e.setDept(d);
-                d.setId(rs.getInt("DepartmentID"));
                 d.setName(rs.getString("DepartmentName"));
-                e.setCreateBy(rs.getNString("CreateBy"));
+                e.setDept(d);
+
+                Role r = new Role();
+                r.setName(rs.getString("RoleName"));  // Lấy Role Name từ ResultSet
+                e.setRoles(r);
 
                 emps.add(e);
             }
@@ -81,12 +95,8 @@ public class EmployeeDBContext extends DBContext<Employee> {
             Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                if (stm != null) {
-                    stm.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
+                stm.close();
+                connection.close();
             } catch (SQLException ex) {
                 Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -109,7 +119,7 @@ public class EmployeeDBContext extends DBContext<Employee> {
             stm_insert = connection.prepareStatement(sql_insert);
             stm_insert.setString(1, entity.getEmployeeName());
             stm_insert.setString(2, entity.getEmployeeSalaryLevel());
-            stm_insert.setInt(3, entity.getRoleID());
+          //  stm_insert.setInt(3, entity.getRoleID());
             stm_insert.setInt(4, entity.getDept().getId());
             stm_insert.setString(5, entity.getCreateBy());
             stm_insert.executeUpdate();
@@ -154,7 +164,7 @@ public class EmployeeDBContext extends DBContext<Employee> {
             stm_update = connection.prepareStatement(sql_update);
             stm_update.setString(1, entity.getEmployeeName());
             stm_update.setString(2, entity.getEmployeeSalaryLevel());
-            stm_update.setInt(3, entity.getRoleID());
+           // stm_update.setInt(3, entity.getRoleID());
             stm_update.setInt(4, entity.getDept().getId());
             stm_update.setString(5, entity.getCreateBy());
             stm_update.setInt(6, entity.getEmployeeID());
@@ -238,48 +248,44 @@ public ArrayList<Employee> list() {
     return emps;
 }
 
-//    @Override
-//    public Employee get(int id) {
-//        PreparedStatement command = null;
-//    try {
-//        String sql = "SELECT e.EmployeeID, e.EmployeeName, e.EmployeeSalaryLevel, e.RoleID, e.DepartmentID, e.CreateBy\n"
-//                   + "FROM Employee e\n"
-//                   + "WHERE e.EmployeeID = ?";
-//
-//        command = connection.prepareStatement(sql);
-//        command.setInt(1, id);
-//        ResultSet rs = command.executeQuery();
-//        if (rs.next()) {
-//            Employee e = new Employee();
-//            e.setEmployeeID(rs.getInt("EmployeeID"));
-//            e.setEmployeeName(rs.getNString("EmployeeName"));
-//            e.setEmployeeSalaryLevel(rs.getNString("EmployeeSalaryLevel"));
-//            e.setRoleID(rs.getInt("RoleID"));
-//            e.setDepartmentID(rs.getInt("DepartmentID"));
-//            e.setCreateBy(rs.getNString("CreateBy"));
-//
-//            return e;
-//        }
-//
-//    } catch (SQLException ex) {
-//        Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
-//    } finally {
-//        try {
-//            if (command != null) {
-//                command.close();
-//            }
-//            if (connection != null) {
-//                connection.close();
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
-//    return null;
-//    }
-//
     @Override
     public Employee get(int id) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        PreparedStatement command = null;
+    try {
+        String sql = "SELECT e.EmployeeID, e.EmployeeName, e.EmployeeSalaryLevel, e.RoleID, e.DepartmentID, e.CreateBy\n"
+                   + "FROM Employee e\n"
+                   + "WHERE e.EmployeeID = ?";
+
+        command = connection.prepareStatement(sql);
+        command.setInt(1, id);
+        ResultSet rs = command.executeQuery();
+        if (rs.next()) {
+            Employee e = new Employee();
+            e.setEmployeeID(rs.getInt("EmployeeID"));
+            e.setEmployeeName(rs.getNString("EmployeeName"));
+            e.setEmployeeSalaryLevel(rs.getNString("EmployeeSalaryLevel"));
+           
+           
+
+            return e;
+        }
+
+    } catch (SQLException ex) {
+        Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
+    } finally {
+        try {
+            if (command != null) {
+                command.close();
+            }
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(EmployeeDBContext.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
+    return null;
+    }
+
+  
 }
